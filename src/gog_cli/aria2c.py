@@ -103,10 +103,18 @@ def download_via_aria2c(
                 checksum_verified=True,
             )
 
-    # aria2c preallocates the file to its full size, so an unfinished download at
-    # the final path would look complete. It keeps its progress in "<part>.aria2"
-    # and resumes from it.
+    # The part file matters for aria2c in particular: it preallocates the file to
+    # its full size, so an unfinished download at the final path would look
+    # complete. Progress is kept in "<part>.aria2", which aria2c resumes from.
     download_path = part_file_path(dest)
+    if "\n" in download_path.name or "\r" in download_path.name:
+        # The name goes into the aria2c input file, where a new line starts an option.
+        return DownloadResult(
+            status="failed",
+            expected_size=expected_size,
+            failure_code="unsafe_filename",
+            failure_message=f"File name cannot be passed to aria2c: {download_path.name!r}",
+        )
     aria2_control = Path(str(download_path) + ".aria2")
     if (
         download_path.exists()

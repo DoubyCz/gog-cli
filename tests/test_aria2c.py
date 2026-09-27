@@ -273,6 +273,21 @@ def test_download_discards_complete_part_file_without_control_file(tmp_path: Pat
     assert seen_part == [False]
 
 
+def test_download_refuses_file_name_that_would_inject_aria2c_options(tmp_path: Path) -> None:
+    dest = tmp_path / "setup.exe\n  allow-overwrite=true"
+
+    with patch("subprocess.run") as mock_run:
+        result = download_via_aria2c(
+            url="https://cdn.example.com/setup.exe",
+            dest=dest,
+            aria2c_path=Path("/usr/bin/aria2c"),
+        )
+
+    mock_run.assert_not_called()
+    assert result.status == "failed"
+    assert result.failure_code == "unsafe_filename"
+
+
 def test_download_size_mismatch_accepted_when_not_strict(tmp_path: Path) -> None:
     dest = tmp_path / "bonus.pdf"
     content = b"bonus content"
