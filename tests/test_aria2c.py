@@ -224,12 +224,13 @@ def test_download_resumes_part_file_with_control_file(tmp_path: Path) -> None:
     dest = tmp_path / "setup.exe"
     content = b"real content"
     part = tmp_path / ".setup.exe.part"
-    part.write_bytes(b"\0" * len(content))
+    partial = b"real" + b"\0" * (len(content) - 4)
+    part.write_bytes(partial)
     Path(str(part) + ".aria2").write_bytes(b"progress")
-    captured: list[tuple[list[str], str]] = []
+    captured: list[tuple[list[str], str, bytes]] = []
 
     def side_effect(cmd, **kwargs):  # noqa: ANN001
-        captured.append((cmd, _aria2c_out_option(cmd)))
+        captured.append((cmd, _aria2c_out_option(cmd), part.read_bytes()))
         _aria2c_output(cmd).write_bytes(content)
         return MagicMock(returncode=0)
 
@@ -241,11 +242,12 @@ def test_download_resumes_part_file_with_control_file(tmp_path: Path) -> None:
             expected_size=len(content),
         )
 
-    [(cmd, out)] = captured
+    [(cmd, out, part_when_started)] = captured
     # aria2c ignores a command-line --out for --input-file URIs
     assert "--out" not in cmd
     assert out == ".setup.exe.part"
     assert "--continue=true" in cmd
+    assert part_when_started == partial
     assert result.status == "downloaded"
     assert dest.read_bytes() == content
     assert not part.exists()
@@ -259,7 +261,7 @@ def test_download_discards_complete_part_file_without_control_file(tmp_path: Pat
 
     def side_effect(cmd, **kwargs):  # noqa: ANN001
         seen_part.append(part.exists())
-        part.write_bytes(b"fresh bytes here!!!")
+        _aria2c_output(cmd).write_bytes(b"fresh bytes here!!!")
         return MagicMock(returncode=0)
 
     with patch("subprocess.run", MagicMock(side_effect=side_effect)):
