@@ -21,7 +21,9 @@
 > - The output name is passed as a per-URI `out=` option in the aria2c input file.
 >   aria2c ignores a command-line `--out` for URIs read from `--input-file`.
 >
-> The change is in commit 12ab8af and is meant to be offered upstream. Until then:
+> The change lives on the `fix/aria2c-resume` branch
+> ([compare with upstream](https://github.com/aleksandarristic/gog-cli/compare/main...DoubyCz:gog-cli:fix/aria2c-resume))
+> and is meant to be offered upstream. Until then:
 > `pip install git+https://github.com/DoubyCz/gog-cli.git`
 
 `gog` is a Python CLI for backing up a user's owned DRM-free GOG game library.
