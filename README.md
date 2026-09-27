@@ -6,6 +6,24 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
+> [!NOTE]
+> **Why this fork exists:** to resume interrupted downloads reliably and make full
+> use of what aria2c does best, picking up exactly where a transfer stopped.
+>
+> In gog-cli 1.0.2, an aria2c download that was cut off (network outage, Ctrl+C,
+> killed process) could not be continued. Running the same `gog dl` command again
+> only re-verified the half-finished file and failed with `checksum_mismatch`.
+>
+> - aria2c now downloads into the hidden `.part` file, like the built-in downloader,
+>   and the file is moved into place only after it passes verification. Before,
+>   aria2c wrote straight to the destination and preallocated it to full size, so an
+>   unfinished download looked like a finished file.
+> - The output name is passed as a per-URI `out=` option in the aria2c input file.
+>   aria2c ignores a command-line `--out` for URIs read from `--input-file`.
+>
+> The change is in commit 12ab8af and is meant to be offered upstream. Until then:
+> `pip install git+https://github.com/DoubyCz/gog-cli.git`
+
 `gog` is a Python CLI for backing up a user's owned DRM-free GOG game library.
 
 It is focused on safe, scriptable workflows:
